@@ -2,16 +2,28 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <thread>
+#include <chrono>
+
+
+int percheroActual = 1;
+int posicionActual = 1;
+
 
 using namespace std;
-
+//////////////////////////////////////////////////////////////
+// Definición de la clase Ropa con 5 características fijas //
+//////////////////////////////////////////////////////////////
 class Ropa {
 private:
     string nombre;
     string valoresCarac[5];
 
+    int perchero; //Posición del perchero (1-3)
+    int posicion; //Posición dentro del perchero (1-5)
+
     // Nombres fijos de las características
-    string nombresCarac[5] = {"Tipo de prenda", "Color", "Tipo de tela", "Talla", "Fit"};
+    string nombresCarac[5] = {"Tipo", "Color", "Tipo de tela", "Talla", "Fit"};
 
 public:
     void ingresar() {
@@ -24,26 +36,36 @@ public:
         }
     }
 
+    void setUbicacion(int p,int pos){
+        perchero = p;
+        posicion = pos;
+    }
+
     string serializar() {
         string linea = nombre;
 
         for (int i = 0; i < 5; i++) {
             linea += "," + valoresCarac[i];
         }
+        linea += "," + to_string(perchero);
+        linea += "," + to_string(posicion);
 
         return linea;
     }
 
-    void deserializar(string linea) {
+    void deserializar(string linea){
+
         stringstream ss(linea);
 
-        getline(ss, nombre, ',');
+        getline(ss,nombre,',');
 
-        for (int i = 0; i < 5; i++) {
-            getline(ss, valoresCarac[i], ',');
-        }
+        for(int i=0;i<5;i++)
+            getline(ss,valoresCarac[i],',');
+
+        ss >> perchero;
+        ss.ignore();
+        ss >> posicion;
     }
-
     void mostrar() {
         cout << "\nNombre: " << nombre << endl;
 
@@ -52,6 +74,8 @@ public:
                  << (valoresCarac[i].empty() ? "N/A" : valoresCarac[i])
                  << endl;
         }
+        cout<<"Perchero: "<<perchero<<endl;
+        cout<<"Posicion: "<<posicion<<endl;
     }
 
     bool coincideNombre(string buscado) {
@@ -66,23 +90,90 @@ public:
         }
         return false;
     }
+
+    int getPerchero(){
+    return perchero;
+    }
+
+    int getPosicion(){
+        return posicion;
+    }
 };
 
-// Guardar
-void agregarRopa() {
-    ofstream archivo("ropa.txt", ios::app);
+//////////////////////////////////////////////////////////////
+//            Función buscar un espacio libre               //
+//////////////////////////////////////////////////////////////
+bool encontrarPosicionLibre(int &perchero, int &posicion) {
+
+    bool ocupado[3][5] = {false};
+
+    ifstream archivo("ropa.txt");
+    string linea;
+
+    while (getline(archivo, linea)) {
+
+        stringstream ss(linea);
+        string temp;
+
+        for(int i=0;i<6;i++)
+            getline(ss,temp,',');
+
+        int p, pos;
+        ss >> p;
+        ss.ignore();
+        ss >> pos;
+
+        ocupado[p-1][pos-1] = true;
+    }
+
+    archivo.close();
+
+    for(int i=0;i<3;i++){
+        for(int j=0;j<5;j++){
+            if(!ocupado[i][j]){
+                perchero = i+1;
+                posicion = j+1;
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+//////////////////////////////////////////////////////////////
+//              Función agregar ropa                        //
+//////////////////////////////////////////////////////////////
+void agregarRopa(){
+
+    int perchero,posicion;
+
+    if(!encontrarPosicionLibre(perchero,posicion)){
+        cout<<"\nNo es posible añadir otra prenda ya que el armario esta lleno\n";
+        return;
+    }
+
     Ropa r;
 
     cin.ignore();
     r.ingresar();
 
-    archivo << r.serializar() << endl;
+    r.setUbicacion(perchero,posicion);
+
+    ofstream archivo("ropa.txt",ios::app);
+
+    archivo<<r.serializar()<<endl;
+
     archivo.close();
 
-    cout << "Prenda guardada.\n";
+    cout<<"\nPrenda guardada en:\n";
+    cout<<"Perchero "<<perchero<<" - Posicion "<<posicion<<endl;
+
 }
 
-// Mostrar
+//////////////////////////////////////////////////////////////
+//           Función mostrar toda la ropa                   //
+//////////////////////////////////////////////////////////////
 void mostrarRopa() {
     ifstream archivo("ropa.txt");
     string linea;
@@ -96,7 +187,54 @@ void mostrarRopa() {
     archivo.close();
 }
 
-// Buscar por nombre
+//////////////////////////////////////////////////////////////
+//              Función control de motores                  //
+//////////////////////////////////////////////////////////////
+
+void moverArmario(int percheroDestino, int posicionDestino) {
+
+    cout << "\nMovimiento del armario:\n";
+
+    cout << "(" << percheroActual << "," << posicionActual << ")" << endl;
+
+    // Si cambia de perchero
+    if (percheroActual != percheroDestino) {
+
+        // volver a posición 1
+        while (posicionActual > 1) {
+            posicionActual--;
+            cout << "(" << percheroActual << "," << posicionActual << ")" << endl;
+            this_thread::sleep_for(chrono::milliseconds(300));
+        }
+
+        // cambiar perchero
+        while (percheroActual < percheroDestino) {
+            percheroActual++;
+            cout << "(" << percheroActual << "," << posicionActual << ")" << endl;
+            this_thread::sleep_for(chrono::milliseconds(300));
+        }
+
+        while (percheroActual > percheroDestino) {
+            percheroActual--;
+            cout << "(" << percheroActual << "," << posicionActual << ")" << endl;
+        }
+    }
+
+    // mover posición
+    while (posicionActual < posicionDestino) {
+        posicionActual++;
+        cout << "(" << percheroActual << "," << posicionActual << ")" << endl;
+    }
+
+    while (posicionActual > posicionDestino) {
+        posicionActual--;
+        cout << "(" << percheroActual << "," << posicionActual << ")" << endl;
+    }
+}
+
+//////////////////////////////////////////////////////////////
+//              Función buscar por nombre                   //
+//////////////////////////////////////////////////////////////
 void buscarPorNombre() {
     ifstream archivo("ropa.txt");
     string linea, buscado;
@@ -112,6 +250,11 @@ void buscarPorNombre() {
         r.deserializar(linea);
 
         if (r.coincideNombre(buscado)) {
+            int perchero = r.getPerchero();
+            int posicion = r.getPosicion();
+
+            moverArmario(perchero,posicion);
+
             r.mostrar();
             encontrado = true;
         }
@@ -124,7 +267,9 @@ void buscarPorNombre() {
     archivo.close();
 }
 
-// Buscar por característica
+//////////////////////////////////////////////////////////////
+//            Función buscar por característica             //
+//////////////////////////////////////////////////////////////
 void buscarPorCaracteristica() {
     ifstream archivo("ropa.txt");
     string linea, buscado;
@@ -152,7 +297,9 @@ void buscarPorCaracteristica() {
     archivo.close();
 }
 
-// Menú
+//////////////////////////////////////////////////////////////
+//                        Menú                              //
+//////////////////////////////////////////////////////////////
 int main() {
     int opcion;
 
@@ -182,6 +329,11 @@ int main() {
         }
 
     } while (opcion != 5);
+    cout << "\nRegresando armario a posicion inicial (1,1)\n";
 
+    moverArmario(1,1);
+
+    cout << "Sistema en posicion inicial.\n";
+    cout << "Saliendo del programa...\n";
     return 0;
 }
