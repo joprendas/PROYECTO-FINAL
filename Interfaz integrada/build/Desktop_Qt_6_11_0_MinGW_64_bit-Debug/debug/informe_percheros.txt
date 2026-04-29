@@ -1,0 +1,40 @@
+INFORME DEL SISTEMA DE PERCHEROS
+================================
+
+PRENDAS ACTUALES EN PERCHEROS
+
+Perchero 1
+  Slot 1: [vacio]
+  Slot 2: [vacio]
+  Slot 3: [vacio]
+  Slot 4: [vacio]
+  Slot 5: [vacio]
+
+Perchero 2
+  Slot 1: [vacio]
+  Slot 2: [vacio]
+  Slot 3: [vacio]
+  Slot 4: [vacio]
+  Slot 5: [vacio]
+
+Perchero 3
+  Slot 1: oda
+  Slot 2: [vacio]
+  Slot 3: [vacio]
+  Slot 4: [vacio]
+  Slot 5: [vacio]
+
+
+PRENDAS CONOCIDAS NO ALMACENADAS
+No hay prendas conocidas fuera de los percheros.
+
+
+DETALLE COMPLETO
+
+oda
+Tipo: Pantalon
+Color: Cafe
+Tela: Denim
+Talla: M
+Fit: Slim
+Ubicacion: Perchero 3 - Slot 1
